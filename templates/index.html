@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Predicción LigaPro</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</head>
+<body>
+  <header>
+    <h1>⚽ PREDICCION DE LA LIGAPRO</h1>
+    <p>Elige dos equipos y ve quién ganaría</p>
+  </header>
+
+  <main class="grid-container">
+    <div class="equipo-container">
+      <select id="equipo1">
+        <option disabled selected>Selecciona equipo 1</option>
+      </select>
+      <img id="img1" src="/static/assets/placeholder.png" alt="Equipo 1" />
+    </div>
+
+    <div class="versus">VS</div>
+
+    <div class="equipo-container">
+      <select id="equipo2">
+        <option disabled selected>Selecciona equipo 2</option>
+      </select>
+      <img id="img2" src="/static/assets/placeholder.png" alt="Equipo 2" />
+    </div>
+  </main>
+
+  <section class="botonera">
+    <button id="predecirBtn">Predecir Ganador</button>
+    <div id="resultado"></div>
+  </section>
+
+  <footer>
+    <p>LigaPro Ecuador</p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
