@@ -1,3 +1,57 @@
+// Función para cambiar imagen del equipo
+function cambiarImagen(equipoSelect, imgElement) {
+  const equipoSeleccionado = equipoSelect.value;
+  
+  if (equipoSeleccionado && equipoSeleccionado !== "Selecciona equipo 1" && equipoSeleccionado !== "Selecciona equipo 2") {
+    // Crear nombre de archivo basado en el nombre del equipo
+    // Convertir a minúsculas, reemplazar espacios y caracteres especiales
+    const nombreArchivo = equipoSeleccionado
+      .toLowerCase()
+      .replace(/\s+/g, '_')           // Espacios por guiones bajos
+      .replace(/[áàäâ]/g, 'a')        // Reemplazar acentos
+      .replace(/[éèëê]/g, 'e')
+      .replace(/[íìïî]/g, 'i')
+      .replace(/[óòöô]/g, 'o')
+      .replace(/[úùüû]/g, 'u')
+      .replace(/ñ/g, 'n')
+      .replace(/[^a-z0-9_]/g, '');    // Eliminar caracteres especiales
+    
+    const rutaImagen = `/static/assets/${nombreArchivo}.png`;
+    
+    // Cambiar la imagen
+    imgElement.src = rutaImagen;
+    imgElement.alt = equipoSeleccionado;
+    
+    // Manejar error si la imagen no existe
+    imgElement.onerror = function() {
+      this.src = '/static/assets/placeholder.png';
+      this.alt = 'Imagen no disponible';
+    };
+  } else {
+    // Volver a imagen placeholder si no hay selección
+    imgElement.src = '/static/assets/placeholder.png';
+    imgElement.alt = 'Selecciona un equipo';
+  }
+}
+
+// Event listeners para los selectores de equipos
+document.addEventListener('DOMContentLoaded', function() {
+  const equipo1Select = document.getElementById('equipo1');
+  const equipo2Select = document.getElementById('equipo2');
+  const img1 = document.getElementById('img1');
+  const img2 = document.getElementById('img2');
+  
+  // Agregar event listeners para cambio de selección
+  equipo1Select.addEventListener('change', function() {
+    cambiarImagen(this, img1);
+  });
+  
+  equipo2Select.addEventListener('change', function() {
+    cambiarImagen(this, img2);
+  });
+});
+
+// Función original de predicción
 document.getElementById('predecirBtn').addEventListener('click', async function () {
   const homeTeam = document.getElementById('equipo1').value;
   const awayTeam = document.getElementById('equipo2').value;
