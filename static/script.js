@@ -3,8 +3,6 @@ function cambiarImagen(equipoSelect, imgElement) {
   const equipoSeleccionado = equipoSelect.value;
   
   if (equipoSeleccionado && equipoSeleccionado !== "Selecciona equipo 1" && equipoSeleccionado !== "Selecciona equipo 2") {
-    // Crear nombre de archivo basado en el nombre del equipo
-    // Convertir a minúsculas, reemplazar espacios y caracteres especiales
     const nombreArchivo = equipoSeleccionado
       .toLowerCase()
       .replace(/\s+/g, '_')           // Espacios por guiones bajos
@@ -22,13 +20,11 @@ function cambiarImagen(equipoSelect, imgElement) {
     imgElement.src = rutaImagen;
     imgElement.alt = equipoSeleccionado;
     
-    // Manejar error si la imagen no existe
     imgElement.onerror = function() {
       this.src = '/static/assets/placeholder.png';
       this.alt = 'Imagen no disponible';
     };
   } else {
-    // Volver a imagen placeholder si no hay selección
     imgElement.src = '/static/assets/placeholder.png';
     imgElement.alt = 'Selecciona un equipo';
   }
@@ -41,7 +37,6 @@ document.addEventListener('DOMContentLoaded', function() {
   const img1 = document.getElementById('img1');
   const img2 = document.getElementById('img2');
   
-  // Agregar event listeners para cambio de selección
   equipo1Select.addEventListener('change', function() {
     cambiarImagen(this, img1);
   });
@@ -49,15 +44,49 @@ document.addEventListener('DOMContentLoaded', function() {
   equipo2Select.addEventListener('change', function() {
     cambiarImagen(this, img2);
   });
+
+  cargarEquipos();
 });
 
-// Función original de predicción
+async function cargarEquipos() {
+  try {
+    const response = await fetch('/equipos');
+    const data = await response.json();
+    
+    if (data.success && data.equipos) {
+      const equipo1Select = document.getElementById('equipo1');
+      const equipo2Select = document.getElementById('equipo2');
+      
+      equipo1Select.innerHTML = '<option disabled selected>Selecciona equipo 1</option>';
+      equipo2Select.innerHTML = '<option disabled selected>Selecciona equipo 2</option>';
+      
+      // Agregar equipos
+      data.equipos.forEach(equipo => {
+        const option1 = document.createElement('option');
+        option1.value = equipo;
+        option1.textContent = equipo;
+        equipo1Select.appendChild(option1);
+        
+        const option2 = document.createElement('option');
+        option2.value = equipo;
+        option2.textContent = equipo;
+        equipo2Select.appendChild(option2);
+      });
+      
+      console.log(`✅ Cargados ${data.equipos.length} equipos`);
+    }
+  } catch (error) {
+    console.error('Error cargando equipos:', error);
+    showError('Error cargando lista de equipos');
+  }
+}
+
 document.getElementById('predecirBtn').addEventListener('click', async function () {
   const homeTeam = document.getElementById('equipo1').value;
   const awayTeam = document.getElementById('equipo2').value;
   const season = 2024;
 
-  if (!homeTeam || !awayTeam) {
+  if (!homeTeam || !awayTeam || homeTeam === "Selecciona equipo 1" || awayTeam === "Selecciona equipo 2") {
     showError('Por favor selecciona ambos equipos');
     return;
   }
@@ -72,13 +101,20 @@ document.getElementById('predecirBtn').addEventListener('click', async function 
   hideResults();
 
   try {
+    console.log(`🎯 Prediciendo: ${homeTeam} vs ${awayTeam}`);
+    
     const response = await fetch('/predecir', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ home_team: homeTeam, away_team: awayTeam, season })
+      body: JSON.stringify({ 
+        home_team: homeTeam, 
+        away_team: awayTeam, 
+        season: season 
+      })
     });
 
     const data = await response.json();
+    console.log('📊 Respuesta del servidor:', data);
 
     if (data.success) {
       displayResults(data);
@@ -86,6 +122,7 @@ document.getElementById('predecirBtn').addEventListener('click', async function 
       showError(data.error || 'Error en la predicción');
     }
   } catch (error) {
+    console.error('Error:', error);
     showError('Error de conexión: ' + error.message);
   } finally {
     showLoading(false);
@@ -93,22 +130,39 @@ document.getElementById('predecirBtn').addEventListener('click', async function 
 });
 
 function showLoading(show) {
-  document.getElementById('loading').style.display = show ? 'block' : 'none';
-  document.getElementById('predecirBtn').disabled = show;
+  const loadingDiv = document.getElementById('loading');
+  const btnPredicir = document.getElementById('predecirBtn');
+  
+  if (loadingDiv) loadingDiv.style.display = show ? 'block' : 'none';
+  if (btnPredicir) btnPredicir.disabled = show;
 }
 
 function showError(message) {
   const errorDiv = document.getElementById('errorMessage');
-  errorDiv.textContent = message;
-  errorDiv.style.display = 'block';
+  if (errorDiv) {
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+    
+    // Auto-ocultar después de 5 segundos
+    setTimeout(() => {
+      hideError();
+    }, 5000);
+  }
+  console.error('❌ Error:', message);
 }
 
 function hideError() {
-  document.getElementById('errorMessage').style.display = 'none';
+  const errorDiv = document.getElementById('errorMessage');
+  if (errorDiv) {
+    errorDiv.style.display = 'none';
+  }
 }
 
 function hideResults() {
-  document.getElementById('resultSection').style.display = 'none';
+  const resultDiv = document.getElementById('resultSection');
+  if (resultDiv) {
+    resultDiv.style.display = 'none';
+  }
 }
 
 function displayResults(data) {
@@ -116,35 +170,99 @@ function displayResults(data) {
   const homeTeam = data.home_team;
   const awayTeam = data.away_team;
 
+  console.log('🎯 Mostrando resultados:', pred);
+
   let resultText = '';
+  let resultClass = '';
+  
   if (pred.resultado_modelo === 'H') {
-    resultText = `Gana ${homeTeam}`;
+    resultText = `🏠 Gana ${homeTeam}`;
+    resultClass = 'win-home';
   } else if (pred.resultado_modelo === 'A') {
-    resultText = `Gana ${awayTeam}`;
+    resultText = `🚗 Gana ${awayTeam}`;
+    resultClass = 'win-away';
   } else {
     resultText = '🤝 Empate';
+    resultClass = 'draw';
   }
 
-  document.getElementById('matchResult').textContent = resultText;
-  document.getElementById('scoreDisplay').textContent = `${homeTeam} ${pred.home_goals} - ${pred.away_goals} ${awayTeam}`;
-  document.getElementById('yellowCards').textContent = pred.yellow_cards;
-  document.getElementById('redCards').textContent = pred.red_cards;
-  document.getElementById('corners').textContent = pred.corners;
-
-  const probDiv = document.getElementById('probabilities');
-  probDiv.innerHTML = '';
-  const labels = { 'H': 'Local', 'D': 'Empate', 'A': 'Visitante' };
-
-  Object.entries(pred.probabilidades).forEach(([key, prob]) => {
-    const card = document.createElement('div');
-    card.className = 'prob-card';
-    card.innerHTML = `
-      <div style="font-weight: bold; margin-bottom: 5px;">${labels[key]}</div>
-      <div style="font-size: 1.2rem;">${(prob * 100).toFixed(1)}%</div>
-    `;
-    probDiv.appendChild(card);
+  // Actualizar elementos
+  const matchResultEl = document.getElementById('matchResult');
+  const scoreDisplayEl = document.getElementById('scoreDisplay');
+  
+  if (matchResultEl) {
+    matchResultEl.textContent = resultText;
+    matchResultEl.className = `match-result ${resultClass}`;
+  }
+  
+  if (scoreDisplayEl) {
+    scoreDisplayEl.textContent = `${homeTeam} ${pred.home_goals} - ${pred.away_goals} ${awayTeam}`;
+  }
+  
+  // Actualizar estadísticas
+  const stats = [
+    { id: 'yellowCards', value: pred.yellow_cards },
+    { id: 'redCards', value: pred.red_cards },
+    { id: 'corners', value: pred.corners }
+  ];
+  
+  stats.forEach(stat => {
+    const element = document.getElementById(stat.id);
+    if (element) {
+      element.textContent = stat.value || '0';
+    }
   });
 
-  document.getElementById('resultSection').style.display = 'block';
-  document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+  const probDiv = document.getElementById('probabilities');
+  if (probDiv && pred.probabilidades) {
+    probDiv.innerHTML = '';
+    const labels = { 'H': 'Local', 'D': 'Empate', 'A': 'Visitante' };
+    const colors = { 'H': '#4CAF50', 'D': '#FF9800', 'A': '#2196F3' };
+
+    Object.entries(pred.probabilidades).forEach(([key, prob]) => {
+      const card = document.createElement('div');
+      card.className = 'prob-card';
+      card.style.borderLeft = `4px solid ${colors[key]}`;
+      
+      card.innerHTML = `
+        <div style="font-weight: bold; margin-bottom: 5px; color: ${colors[key]};">
+          ${labels[key] || key}
+        </div>
+        <div style="font-size: 1.2rem; font-weight: bold;">
+          ${(prob * 100).toFixed(1)}%
+        </div>
+        <div class="prob-bar">
+          <div class="prob-fill" style="width: ${prob * 100}%; background-color: ${colors[key]};"></div>
+        </div>
+      `;
+      probDiv.appendChild(card);
+    });
+  }
+
+  // Mostrar sección de resultados
+  const resultSection = document.getElementById('resultSection');
+  if (resultSection) {
+    resultSection.style.display = 'block';
+    resultSection.scrollIntoView({ behavior: 'smooth' });
+  }
 }
+
+// CORRECCIÓN: Función de test para verificar conexión
+async function testConexion() {
+  try {
+    const response = await fetch('/test');
+    const data = await response.json();
+    console.log('🔧 Test de conexión:', data);
+    return data.success;
+  } catch (error) {
+    console.error('❌ Error en test de conexión:', error);
+    return false;
+  }
+}
+
+// Ejecutar test al cargar la página
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(() => {
+    testConexion();
+  }, 1000);
+});
