@@ -175,16 +175,6 @@ function displayResults(data) {
   let resultText = '';
   let resultClass = '';
   
-  if (pred.resultado_modelo === 'H') {
-    resultText = `🏠 Gana ${homeTeam}`;
-    resultClass = 'win-home';
-  } else if (pred.resultado_modelo === 'A') {
-    resultText = `🚗 Gana ${awayTeam}`;
-    resultClass = 'win-away';
-  } else {
-    resultText = '🤝 Empate';
-    resultClass = 'draw';
-  }
 
   // Actualizar elementos
   const matchResultEl = document.getElementById('matchResult');
