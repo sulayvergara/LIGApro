@@ -41,6 +41,7 @@ header {
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  margin-bottom: 1rem;
 }
 
 header h1 {
@@ -197,9 +198,12 @@ button:disabled {
   backdrop-filter: blur(15px);
   border-radius: 20px;
   padding: 1.5rem;
-  margin: 1rem 0;
+  margin-left: auto;
+  margin-right: auto;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   animation: fadeIn 0.5s ease-out;
+  width: 60%;
+
 }
 
 @keyframes fadeIn {
@@ -312,6 +316,9 @@ footer {
   text-align: center;
   font-size: 0.8rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
+  position: absolute;
+  bottom: 0;
+  width: 100%;
 }
 
 /* Responsive Design */
@@ -368,6 +375,7 @@ footer {
   select {
     font-size: 0.8rem;
     padding: 0.5rem;
+    
   }
   
   button {
@@ -384,6 +392,7 @@ footer {
   
   .grid-container {
     margin-bottom: 2rem;
+    
   }
   
   img {
