@@ -404,3 +404,58 @@ footer {
     padding: 2rem;
   }
 }
+
+/* Estilos para las estadísticas del modelo */
+.model-stats-section {
+    margin-top: 25px;
+}
+
+.model-stats-title {
+    color: white;
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.model-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.model-stat-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    /* Reutiliza los mismos estilos de tus stat-card existentes */
+}
+
+.model-stat-value {
+    color: #FFD700 !important; /* Color dorado para diferenciarlo */
+    font-family: 'Courier New', monospace;
+    font-size: 1.5em;
+}
+
+.confidence-card {
+    grid-column: span 1;
+    background: rgba(76, 175, 80, 0.2) !important;
+    border: 1px solid rgba(76, 175, 80, 0.4);
+}
+
+.confidence-card .model-stat-value {
+    color: #4CAF50 !important;
+}
+
+/* Responsive para móviles */
+@media (max-width: 768px) {
+    .model-stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+    
+    .model-stat-value {
+        font-size: 1.2em;
+    }
+}

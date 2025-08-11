@@ -14,7 +14,6 @@ label_encoders = None
 df_data = None
 
 def cargar_modelos():
-    """Cargar todos los modelos y datos necesarios"""
     global clf_model, scaler, regresores, label_encoders, df_data
     
     try:
@@ -25,18 +24,16 @@ def cargar_modelos():
         label_encoders = joblib.load('label_encoders.pkl')
         
         # Cargar datos (asegúrate de tener el archivo Excel)
-        df_data = pd.read_excel('dataset_final_merged.xlsx', sheet_name='Sheet1')
+        df_data = pd.read_excel('dataset_final.xlsx', sheet_name='Sheet1')
         
-        print("✅ Modelos cargados exitosamente")
-        print(f"📊 Datos cargados: {len(df_data)} registros")
-        print(f"🎯 Clases del modelo: {label_encoders['match_result'].classes_}")
+        print("Modelos cargados exitosamente")
+
         return True
     except Exception as e:
-        print(f"❌ Error cargando modelos: {e}")
+        print(f"Error cargando modelos: {e}")
         return False
 
 def obtener_equipos_disponibles():
-    """Obtener lista de equipos únicos disponibles"""
     if df_data is None:
         return []
     
@@ -52,11 +49,10 @@ def obtener_equipos_disponibles():
         # Combinar y eliminar duplicados
         equipos_originales = set(home_teams_decoded).union(set(away_teams_decoded))
         
-        print(f"📋 Equipos decodificados: {len(equipos_originales)} únicos")
         return sorted(list(equipos_originales))
         
     except Exception as e:
-        print(f"❌ Error decodificando equipos: {e}")
+        print(f"Error decodificando equipos: {e}")
         # Como fallback, devolver lista de equipos conocidos del encoder
         try:
             equipos_fallback = list(label_encoders['home_team_name'].classes_)
@@ -65,8 +61,8 @@ def obtener_equipos_disponibles():
         except:
             return []
 
-def predecir_partido_final_v3(home_team, away_team, season_actual):
 
+def predecir_partido(home_team, away_team, season_actual):
     print(f"Buscando datos para: {home_team} vs {away_team}")
     
     try:
@@ -83,13 +79,9 @@ def predecir_partido_final_v3(home_team, away_team, season_actual):
         home_team_encoded = label_encoders['home_team_name'].transform([home_team])[0]
         away_team_encoded = label_encoders['away_team_name'].transform([away_team])[0]
         
-        # print(f"🔢 Códigos: {home_team}={home_team_encoded}, {away_team}={away_team_encoded}")
-        
         # Buscar datos en el DataFrame usando los códigos encoded
         home_match = df_data[df_data['home_team_name'] == home_team_encoded]
         away_match = df_data[df_data['away_team_name'] == away_team_encoded]
-        
-        # print(f"📊 Registros encontrados: Home={len(home_match)}, Away={len(away_match)}")
         
         if home_match.empty or away_match.empty:
             # Buscar como visitante/local respectivamente
@@ -97,7 +89,6 @@ def predecir_partido_final_v3(home_team, away_team, season_actual):
             away_match_alt = df_data[df_data['home_team_name'] == away_team_encoded]
             
             if home_match.empty and not home_match_alt.empty:
-                # Usar datos como visitante pero invertir las estadísticas
                 home_stats = {
                     'home_avg_corners': home_match_alt['away_avg_corners'].mean(),
                     'home_avg_yellow_cards': home_match_alt['away_avg_yellow_cards'].mean(),
@@ -107,7 +98,6 @@ def predecir_partido_final_v3(home_team, away_team, season_actual):
                 home_stats = home_match.mean(numeric_only=True)
                 
             if away_match.empty and not away_match_alt.empty:
-                # Usar datos como local pero invertir las estadísticas  
                 away_stats = {
                     'away_avg_corners': away_match_alt['home_avg_corners'].mean(),
                     'away_avg_yellow_cards': away_match_alt['home_avg_yellow_cards'].mean(),
@@ -120,7 +110,7 @@ def predecir_partido_final_v3(home_team, away_team, season_actual):
             home_stats = home_match.mean(numeric_only=True)
             away_stats = away_match.mean(numeric_only=True)
 
-        # CORRECCIÓN 2: Preparar entrada para el modelo usando los features correctos
+        # Preparar entrada para el modelo usando los features correctos
         features_modelo = [
             'home_team_name', 'away_team_name', 'league_name', 'season',
             'home_avg_corners', 'home_avg_yellow_cards', 'home_avg_red_cards',
@@ -134,7 +124,7 @@ def predecir_partido_final_v3(home_team, away_team, season_actual):
         elif not away_match.empty:
             league_encoded = away_match.iloc[0]['league_name']
         else:
-            league_encoded = 4  # Valor por defecto (puede ser LigaPro)
+            league_encoded = 4  # Valor por defecto
 
         # Preparar entrada para el modelo
         entrada = {
@@ -152,8 +142,6 @@ def predecir_partido_final_v3(home_team, away_team, season_actual):
             'total_avg_yellow_cards': (home_stats.get('home_avg_yellow_cards', 25.0) + away_stats.get('away_avg_yellow_cards', 30.0)),
             'total_avg_red_cards': (home_stats.get('home_avg_red_cards', 2.0) + away_stats.get('away_avg_red_cards', 2.5))
         }
-        
-        print(f"📊 Entrada preparada: {entrada}")
 
     except Exception as e:
         print(f"❌ Error preparando datos: {e}")
@@ -164,15 +152,15 @@ def predecir_partido_final_v3(home_team, away_team, season_actual):
         entrada_df = pd.DataFrame([entrada])[features_modelo]
         entrada_scaled = scaler.transform(entrada_df)
 
-        #Predecir y convertir correctamente
+        # Predecir resultado del partido
         resultado_pred_num = clf_model.predict(entrada_scaled)[0]  # Número (0, 1, 2)
         resultado_pred = label_encoders['match_result'].inverse_transform([resultado_pred_num])[0]  # String (A, D, H)
         
-        #Obtener probabilidades
+        # Obtener probabilidades
         probabilidades = clf_model.predict_proba(entrada_scaled)[0]
         clases = clf_model.classes_
         
-        #Mapear probabilidades correctamente
+        # Mapear probabilidades correctamente
         prob_dict = {}
         for i, clase_num in enumerate(clases):
             clase_str = label_encoders['match_result'].inverse_transform([clase_num])[0]
@@ -191,15 +179,24 @@ def predecir_partido_final_v3(home_team, away_team, season_actual):
             'resultado_modelo': "D",
             'detalle': "Empate detectado. No se generan goles ni estadísticas.",
             'probabilidades': prob_dict,
-            'home_goals': 0,
-            'away_goals': 0,
-            'yellow_cards': 0,
-            'red_cards': 0,
-            'corners': 0
+            'expected': {
+                'home_goals': 1.0,
+                'away_goals': 1.0,
+                'yellow_cards': 5.0,
+                'red_cards': 0.3,
+                'corners': 9.5
+            },
+            'simulated': {
+                'home_goals': 1,
+                'away_goals': 1,
+                'yellow_cards': 5,
+                'red_cards': 0,
+                'corners': 10
+            },
         }
 
     try:
-        #Predecir estadísticas con regresores
+        # Predecir estadísticas con regresores
         estadisticas_crudas = {}
         targets = ['home_goals_norm', 'away_goals_norm', 'total_avg_corners', 'total_avg_yellow_cards', 'total_avg_red_cards']
         
@@ -207,37 +204,53 @@ def predecir_partido_final_v3(home_team, away_team, season_actual):
             if target in regresores:
                 estadisticas_crudas[target] = float(regresores[target].predict(entrada_scaled)[0])
 
-        #Goles con distribución Poisson
-        home_g = max(0, int(np.random.poisson(max(0.1, estadisticas_crudas.get('home_goals_norm', 1.5)))))
-        away_g = max(0, int(np.random.poisson(max(0.1, estadisticas_crudas.get('away_goals_norm', 1.2)))))
+        # Valores esperados (exactos del modelo)
+        expected = {
+            'home_goals': float(estadisticas_crudas.get('home_goals_norm', 1.5)),
+            'away_goals': float(estadisticas_crudas.get('away_goals_norm', 1.2)),
+            'yellow_cards': float(estadisticas_crudas.get('total_avg_yellow_cards', 50)) / 10,
+            'red_cards': float(estadisticas_crudas.get('total_avg_red_cards', 3)) / 10,
+            'corners': float(estadisticas_crudas.get('total_avg_corners', 95)) / 10
+        }
 
-        if resultado_pred == "H":
-            if home_g <= away_g:
-                home_g = away_g + np.random.randint(1, 3)
-        elif resultado_pred == "A":
-            if away_g <= home_g:
-                away_g = home_g + np.random.randint(1, 3)
+        # Simulación realista con distribuciones apropiadas
+        # ✅ Goles: Distribución Poisson (apropiada para eventos raros)
+        home_g = np.random.poisson(max(0.1, expected['home_goals']))
+        away_g = np.random.poisson(max(0.1, expected['away_goals']))
 
-        #Simulación de estadísticas
-        yellow_cards = max(0, int(np.random.normal(
-            estadisticas_crudas.get('total_avg_yellow_cards', 50) / 10, 1
-        )))
-        red_cards = max(0, int(np.random.normal(
-            estadisticas_crudas.get('total_avg_red_cards', 3) / 10, 0.5
-        )))
-        corners = max(0, int(np.random.normal(
-            estadisticas_crudas.get('total_avg_corners', 95) / 10, 1.5
-        )))
+        # Forzar consistencia con la predicción del clasificador
+        if resultado_pred == "H" and home_g <= away_g:
+            home_g = away_g + np.random.randint(1, 3)
+        elif resultado_pred == "A" and away_g <= home_g:
+            away_g = home_g + np.random.randint(1, 3)
+
+        # ✅ Otras estadísticas: Distribución normal truncada
+        def simular_estadistica(valor_esperado, desviacion=1.0):
+            """Simula estadística con distribución normal truncada"""
+            valor = max(0, np.random.normal(valor_esperado, desviacion))
+            return int(round(valor))
+
+        simulated = {
+            'home_goals': int(home_g),
+            'away_goals': int(away_g),
+            'yellow_cards': simular_estadistica(expected['yellow_cards'], 1.0),
+            'red_cards': simular_estadistica(expected['red_cards'], 0.5),
+            'corners': simular_estadistica(expected['corners'], 1.5)
+        }
+
 
         return {
             'resultado_modelo': resultado_pred,
             'probabilidades': prob_dict,
-            'home_goals': home_g,
-            'away_goals': away_g,
-            'yellow_cards': yellow_cards,
-            'red_cards': red_cards,
-            'corners': corners,
-            'estadisticas_raw': estadisticas_crudas 
+            'expected': expected,      # Para análisis
+            'simulated': simulated,    # Para predicción realista
+            'estadisticas_raw': estadisticas_crudas,
+            # Mantener compatibilidad con la interfaz anterior
+            'home_goals': simulated['home_goals'],
+            'away_goals': simulated['away_goals'],
+            'yellow_cards': simulated['yellow_cards'],
+            'red_cards': simulated['red_cards'],
+            'corners': simulated['corners']
         }
         
     except Exception as e:
@@ -266,7 +279,8 @@ def predecir():
         
         print(f"🎯 Prediciendo: {home_team} vs {away_team} (Temporada {season})")
         
-        resultado = predecir_partido_final_v3(home_team, away_team, season)
+        # Usar la función optimizada
+        resultado = predecir_partido(home_team, away_team, season)
         
         if 'error' in resultado:
             print(f"❌ Error en modelo: {resultado['error']}")
@@ -316,7 +330,7 @@ def test_modelo():
         home_test = equipos[0]
         away_test = equipos[1] if equipos[1] != equipos[0] else equipos[2]
         
-        resultado_test = predecir_partido_final_v3(home_test, away_test, 2025)
+        resultado_test = predecir_partido(home_test, away_test, 2025)
         
         return jsonify({
             'success': True,

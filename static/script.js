@@ -163,6 +163,12 @@ function hideResults() {
   if (resultDiv) {
     resultDiv.style.display = 'none';
   }
+  
+  // Ocultar también la sección de estadísticas del modelo
+  const modelStatsDiv = document.getElementById('modelStatsSection');
+  if (modelStatsDiv) {
+    modelStatsDiv.style.display = 'none';
+  }
 }
 
 function displayResults(data) {
@@ -175,7 +181,6 @@ function displayResults(data) {
   let resultText = '';
   let resultClass = '';
   
-
   // Actualizar elementos
   const matchResultEl = document.getElementById('matchResult');
   const scoreDisplayEl = document.getElementById('scoreDisplay');
@@ -203,6 +208,7 @@ function displayResults(data) {
     }
   });
 
+  // Mostrar probabilidades
   const probDiv = document.getElementById('probabilities');
   if (probDiv && pred.probabilidades) {
     probDiv.innerHTML = '';
@@ -227,6 +233,53 @@ function displayResults(data) {
       `;
       probDiv.appendChild(card);
     });
+  }
+
+  // 📈 MOSTRAR ESTADÍSTICAS DEL MODELO (NUEVA FUNCIONALIDAD)
+  if (pred.expected) {
+    // Actualizar valores esperados
+    const expectedGoalsEl = document.getElementById('expectedGoals');
+    const expectedYellowEl = document.getElementById('expectedYellow');
+    const expectedRedEl = document.getElementById('expectedRed');
+    const expectedCornersEl = document.getElementById('expectedCorners');
+    const modelConfidenceEl = document.getElementById('modelConfidence');
+    const confidenceCardEl = document.getElementById('confidenceCard');
+    
+    if (expectedGoalsEl) {
+      expectedGoalsEl.textContent = `${pred.expected.home_goals.toFixed(2)} - ${pred.expected.away_goals.toFixed(2)}`;
+    }
+    
+    if (expectedYellowEl) {
+      expectedYellowEl.textContent = pred.expected.yellow_cards.toFixed(2);
+    }
+    
+    if (expectedRedEl) {
+      expectedRedEl.textContent = pred.expected.red_cards.toFixed(2);
+    }
+    
+    if (expectedCornersEl) {
+      expectedCornersEl.textContent = pred.expected.corners.toFixed(2);
+    }
+    
+    // Mostrar confianza si está disponible
+    if (pred.confidence && modelConfidenceEl && confidenceCardEl) {
+      modelConfidenceEl.textContent = `${(pred.confidence * 100).toFixed(1)}%`;
+      confidenceCardEl.style.display = 'block';
+    }
+    
+    // Mostrar la sección de estadísticas del modelo
+    const modelStatsSection = document.getElementById('modelStatsSection');
+    if (modelStatsSection) {
+      modelStatsSection.style.display = 'block';
+      console.log('✅ Mostrando estadísticas del modelo');
+    }
+  } else {
+    // Ocultar si no hay datos esperados
+    const modelStatsSection = document.getElementById('modelStatsSection');
+    if (modelStatsSection) {
+      modelStatsSection.style.display = 'none';
+      console.log('⚠️ No hay estadísticas del modelo disponibles');
+    }
   }
 
   // Mostrar sección de resultados
