@@ -2,7 +2,7 @@
 function cambiarImagen(equipoSelect, imgElement) {
   const equipoSeleccionado = equipoSelect.value;
   
-  if (equipoSeleccionado && equipoSeleccionado !== "Selecciona equipo 1" && equipoSeleccionado !== "Selecciona equipo 2") {
+  if (equipoSeleccionado && equipoSeleccionado !== "LOCAL" && equipoSeleccionado !== "VISITANTE") {
     const nombreArchivo = equipoSeleccionado
       .toLowerCase()
       .replace(/\s+/g, '_')           // Espacios por guiones bajos
@@ -36,7 +36,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const equipo2Select = document.getElementById('equipo2');
   const img1 = document.getElementById('img1');
   const img2 = document.getElementById('img2');
-  
+
+
   equipo1Select.addEventListener('change', function() {
     cambiarImagen(this, img1);
   });
@@ -57,8 +58,8 @@ async function cargarEquipos() {
       const equipo1Select = document.getElementById('equipo1');
       const equipo2Select = document.getElementById('equipo2');
       
-      equipo1Select.innerHTML = '<option disabled selected>Selecciona equipo 1</option>';
-      equipo2Select.innerHTML = '<option disabled selected>Selecciona equipo 2</option>';
+      equipo1Select.innerHTML = '<option disabled selected>Selecciona equipo Local</option>';
+      equipo2Select.innerHTML = '<option disabled selected>Selecciona equipo Visitante</option>';
       
       // Agregar equipos
       data.equipos.forEach(equipo => {
@@ -85,6 +86,17 @@ document.getElementById('predecirBtn').addEventListener('click', async function 
   const homeTeam = document.getElementById('equipo1').value;
   const awayTeam = document.getElementById('equipo2').value;
   const season = 2024;
+
+  img1.style.width = "200px";
+  img1.style.height = "200px";
+
+  img2.style.width = "200px";
+  img2.style.height = "200px";
+
+  equipo1.style.width = "200px";
+  equipo2.style.width = "200px";
+
+  predecirBtn= this.style.fontSize = "1.2rem";
 
   if (!homeTeam || !awayTeam || homeTeam === "Selecciona equipo 1" || awayTeam === "Selecciona equipo 2") {
     showError('Por favor selecciona ambos equipos');
@@ -116,6 +128,9 @@ document.getElementById('predecirBtn').addEventListener('click', async function 
     const data = await response.json();
     console.log('📊 Respuesta del servidor:', data);
 
+    console.log('📌 Home Team recibido:', data.home_team);
+    console.log('📌 Away Team recibido:', data.away_team);
+
     if (data.success) {
       displayResults(data);
     } else {
@@ -132,6 +147,7 @@ document.getElementById('predecirBtn').addEventListener('click', async function 
 function showLoading(show) {
   const loadingDiv = document.getElementById('loading');
   const btnPredicir = document.getElementById('predecirBtn');
+  
   
   if (loadingDiv) loadingDiv.style.display = show ? 'block' : 'none';
   if (btnPredicir) btnPredicir.disabled = show;
@@ -181,6 +197,17 @@ function displayResults(data) {
   let resultText = '';
   let resultClass = '';
   
+    if (pred.resultado_modelo === 'H') {
+    resultText = `Gana ${homeTeam}`;
+    resultClass = 'win-home';
+  } else if (pred.resultado_modelo === 'A') {
+    resultText = `Gana ${awayTeam}`;
+    resultClass = 'win-away';
+  } else {
+    resultText = 'Empate';
+    resultClass = 'draw';
+  }
+
   // Actualizar elementos
   const matchResultEl = document.getElementById('matchResult');
   const scoreDisplayEl = document.getElementById('scoreDisplay');
@@ -209,13 +236,19 @@ function displayResults(data) {
   });
 
   // Mostrar probabilidades
-  const probDiv = document.getElementById('probabilities');
-  if (probDiv && pred.probabilidades) {
-    probDiv.innerHTML = '';
-    const labels = { 'H': 'Local', 'D': 'Empate', 'A': 'Visitante' };
-    const colors = { 'H': '#4CAF50', 'D': '#FF9800', 'A': '#2196F3' };
-
-    Object.entries(pred.probabilidades).forEach(([key, prob]) => {
+// Mostrar probabilidades EN EL ORDEN CORRECTO (H, D, A)
+const probDiv = document.getElementById('probabilities');
+if (probDiv && pred.probabilidades) {
+  probDiv.innerHTML = '';
+  const labels = { 'H': 'Local', 'D': 'Empate', 'A': 'Visitante' };
+  const colors = { 'H': '#4CAF50', 'D': '#FF9800', 'A': '#2196F3' };
+  
+  // ✅ ORDEN FIJO: H, D, A (en lugar de usar Object.entries)
+  const ordenCorrecto = ['H', 'D', 'A'];
+  
+  ordenCorrecto.forEach(key => {
+    if (pred.probabilidades[key] !== undefined) {
+      const prob = pred.probabilidades[key];
       const card = document.createElement('div');
       card.className = 'prob-card';
       card.style.borderLeft = `4px solid ${colors[key]}`;
@@ -232,10 +265,11 @@ function displayResults(data) {
         </div>
       `;
       probDiv.appendChild(card);
-    });
-  }
+    }
+  });
+}
 
-  // 📈 MOSTRAR ESTADÍSTICAS DEL MODELO (NUEVA FUNCIONALIDAD)
+  //  MOSTRAR ESTADÍSTICAS DEL MODELO (NUEVA FUNCIONALIDAD)
   if (pred.expected) {
     // Actualizar valores esperados
     const expectedGoalsEl = document.getElementById('expectedGoals');
