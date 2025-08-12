@@ -85,6 +85,7 @@ async function cargarEquipos() {
 document.getElementById('predecirBtn').addEventListener('click', async function () {
   const homeTeam = document.getElementById('equipo1').value;
   const awayTeam = document.getElementById('equipo2').value;
+  const versus = document.getElementById('idversus');
   const season = 2024;
 
   img1.style.width = "200px";
@@ -95,8 +96,8 @@ document.getElementById('predecirBtn').addEventListener('click', async function 
 
   equipo1.style.width = "200px";
   equipo2.style.width = "200px";
-
-  predecirBtn= this.style.fontSize = "1.2rem";
+  versus.style.fontSize = "1.6rem";
+  predecirBtn.style.fontSize = "1.1rem";
 
   if (!homeTeam || !awayTeam || homeTeam === "Selecciona equipo 1" || awayTeam === "Selecciona equipo 2") {
     showError('Por favor selecciona ambos equipos');
@@ -178,6 +179,10 @@ function hideResults() {
   const resultDiv = document.getElementById('resultSection');
   if (resultDiv) {
     resultDiv.style.display = 'none';
+  }
+  const matchResultDiv = document.getElementById('matchResult');
+  if (matchResultDiv) {
+    matchResultDiv.style.display = 'none';
   }
   
   // Ocultar también la sección de estadísticas del modelo
@@ -315,8 +320,12 @@ if (probDiv && pred.probabilidades) {
       console.log('⚠️ No hay estadísticas del modelo disponibles');
     }
   }
-
-  // Mostrar sección de resultados
+  // Mostrar seccion de resultados
+  const matchResultDiv = document.getElementById('matchResult');
+  if (matchResultDiv) {
+    matchResultDiv.style.display = 'flex';
+  }
+ 
   const resultSection = document.getElementById('resultSection');
   if (resultSection) {
     resultSection.style.display = 'block';

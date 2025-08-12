@@ -218,21 +218,23 @@ button:disabled {
 }
 
 .match-result {
-  font-size: 1.2rem;
+  font-size: 1.5rem;
   font-weight: 600;
-  max-width: 300px;
+  font-weight: bold;
+  max-width: 850px;
   margin-bottom: 0.5rem;
-  color: #FFD700;
+  color: #e7fffd;
   margin: 0 auto;
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgba(109, 109, 109, 0.548);
+  background-color: rgba(109, 109, 109, 0.397);
   border: 1px solid rgba(255, 255, 255, 0.2);
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(15px);
   border-radius: 20px;
   animation: fadeIn 0.5s ease-out;
+  
 }
 
 .score {
