@@ -214,17 +214,21 @@ function displayResults(data) {
   }
 
   // Actualizar elementos
-  const matchResultEl = document.getElementById('matchResult');
+  // const matchResultEl = document.getElementById('matchResult');
   const scoreDisplayEl = document.getElementById('scoreDisplay');
   
-  if (matchResultEl) {
-    matchResultEl.textContent = resultText;
-    matchResultEl.className = `match-result ${resultClass}`;
-  }
+  // if (matchResultEl) {
+  //   matchResultEl.textContent = resultText;
+  //   matchResultEl.className = `match-result ${resultClass}`;
+  // }
   
   if (scoreDisplayEl) {
-    scoreDisplayEl.textContent = `${homeTeam} ${pred.home_goals} - ${pred.away_goals} ${awayTeam}`;
+  if (pred.expected) {
+    scoreDisplayEl.textContent = `${homeTeam} ${pred.expected.home_goals.toFixed(0)} - ${pred.expected.away_goals.toFixed(0)} ${awayTeam}`;
+  } else {
+    scoreDisplayEl.textContent = `${homeTeam} - ${awayTeam}`;
   }
+}
   
   // Actualizar estadísticas
   const stats = [
